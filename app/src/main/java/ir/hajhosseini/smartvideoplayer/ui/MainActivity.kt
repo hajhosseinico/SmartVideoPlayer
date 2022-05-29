@@ -24,8 +24,8 @@ class MainActivity : AppCompatActivity() {
         setToolbar()
     }
 
-    fun setToolbar() {
-        setSupportActionBar(findViewById(R.id.toolbar))
+    private fun setToolbar() {
+        setSupportActionBar(binding.toolbar)
         binding.toolbarLayout.title = getString(R.string.home_title)
         binding.toolbarLayout.expandedTitleGravity = Gravity.CENTER
         binding.toolbarLayout.collapsedTitleGravity = Gravity.CENTER

@@ -25,82 +25,38 @@ constructor(
         flow {
             emit(DataState.Loading)
 
-            withContext(Dispatchers.IO) {
-                if (internetStatus.isInternetAvailable() and !workOffline) {
-                    try {
-                        val baseNetworkMovies = videoRetrofitInterface.getVideoList()
-                        for (video in baseNetworkMovies) {
-                            videoDao.insert(cacheMapper.mapVideoListToEntity(video))
-                        }
-                        val cachedVideos = videoDao.get()
-                        withContext(Dispatchers.Main.immediate) {
-                            emit(DataState.Success(cachedVideos))
-                        }
-
-                    } catch (e: Exception) {
-                        withContext(Dispatchers.Main.immediate) {
-                            emit(DataState.Error(e))
-                        }
-                    }
-                } else {
-                    try {
-                        val dataState = DataState.Success(videoDao.get())
-                        dataState.isFromCache = true
-                        withContext(Dispatchers.Main.immediate) {
-                            emit(dataState)
-                        }
-                    } catch (e: Exception) {
-                        withContext(Dispatchers.Main.immediate) {
-                            emit(DataState.Error(e))
-                        }
-                    }
+            if (internetStatus.isInternetAvailable() and !workOffline) {
+                val baseNetworkMovies = videoRetrofitInterface.getVideoList()
+                for (video in baseNetworkMovies) {
+                    videoDao.insert(cacheMapper.mapVideoListToEntity(video))
                 }
+                val cachedVideos = videoDao.get()
+                emit(DataState.Success(cachedVideos))
+
+            } else {
+                val dataState = DataState.Success(videoDao.get())
+                dataState.isFromCache = true
+                emit(dataState)
             }
         }
 
     suspend fun updateLikes(likes: Int, videoUrl: String): Flow<Int> =
         flow {
-            withContext(Dispatchers.IO) {
-                try {
-                    if (likes < 0)
-                        withContext(Dispatchers.Main.immediate) {
-                            emit(0)
-                        }
-                    else {
-                        videoDao.updateLikes(likes, videoUrl)
-                        withContext(Dispatchers.Main.immediate) {
-                            emit(likes)
-                        }
-                    }
-
-                } catch (e: Exception) {
-                    withContext(Dispatchers.Main.immediate) {
-                        emit(-1)
-                    }
-                }
+            if (likes < 0)
+                emit(0)
+            else {
+                videoDao.updateLikes(likes, videoUrl)
+                emit(likes)
             }
         }
 
     suspend fun updateViews(views: Int, videoUrl: String): Flow<Int> =
         flow {
-            withContext(Dispatchers.IO) {
-                try {
-                    if (views < 0)
-                        withContext(Dispatchers.Main.immediate) {
-                            emit(0)
-                        }
-                    else {
-                        videoDao.updateViews(views, videoUrl)
-                        withContext(Dispatchers.Main.immediate) {
-                            emit(views)
-                        }
-                    }
-
-                } catch (e: Exception) {
-                    withContext(Dispatchers.Main.immediate) {
-                        emit(-1)
-                    }
-                }
+            if (views < 0)
+                emit(0)
+            else {
+                videoDao.updateViews(views, videoUrl)
+                emit(views)
             }
         }
 }

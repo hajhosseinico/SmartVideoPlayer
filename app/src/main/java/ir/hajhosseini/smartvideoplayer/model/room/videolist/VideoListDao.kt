@@ -7,7 +7,7 @@ import androidx.room.*
  */
 @Dao
 interface VideoListDao {
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(videoListEntity: VideoListCacheEntity): Long
 
     @Query("SELECT * FROM video_list")

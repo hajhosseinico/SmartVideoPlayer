@@ -20,6 +20,10 @@ import ir.hajhosseini.smartvideoplayer.model.room.videolist.VideoListCacheEntity
 import ir.hajhosseini.smartvideoplayer.ui.MainActivity
 import ir.hajhosseini.smartvideoplayer.ui.videolist.VideoListStateEvent
 import ir.hajhosseini.smartvideoplayer.ui.videolist.VideoListViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * SettingFragment
@@ -29,7 +33,7 @@ class SettingFragment : Fragment(R.layout.fragment_video_list),
     SettingRecyclerAdapter.Interaction {
 
     private val viewModel: VideoListViewModel by viewModels()
-    var videoListRecyclerAdapter: SettingRecyclerAdapter? = null
+    private var videoListRecyclerAdapter: SettingRecyclerAdapter? = null
     private var _binding: FragmentVideoListBinding? = null
     private val binding get() = _binding!!
 
@@ -53,18 +57,20 @@ class SettingFragment : Fragment(R.layout.fragment_video_list),
 
     private fun subscribeObservers() {
         viewModel.dataState.observe(viewLifecycleOwner, Observer { dataState ->
-            when (dataState) {
-                is DataState.Success<List<VideoListCacheEntity>> -> {
-                    displayProgressBar(false)
-                    initOrUpdateRecyclerView(dataState.data as ArrayList<VideoListCacheEntity>)
-                }
-                is DataState.Error -> {
-                    displayProgressBar(false)
-                    displayError(dataState.exception.toString())
-                }
+            CoroutineScope(Dispatchers.Main).launch {
+                when (dataState) {
+                    is DataState.Success<List<VideoListCacheEntity>> -> {
+                        displayProgressBar(false)
+                        initOrUpdateRecyclerView(dataState.data as ArrayList<VideoListCacheEntity>)
+                    }
+                    is DataState.Error -> {
+                        displayProgressBar(false)
+                        displayError(dataState.exception.toString())
+                    }
 
-                is DataState.Loading -> {
-                    displayProgressBar(true)
+                    is DataState.Loading -> {
+                        displayProgressBar(true)
+                    }
                 }
             }
         })
@@ -94,7 +100,7 @@ class SettingFragment : Fragment(R.layout.fragment_video_list),
     }
 
     private fun displayProgressBar(shouldDisplay: Boolean) {
-        view?.findViewById<ProgressBar>(R.id.prg_loading)!!.visibility =
+        binding.prgLoading.visibility =
             if (shouldDisplay) View.VISIBLE else View.GONE
     }
 

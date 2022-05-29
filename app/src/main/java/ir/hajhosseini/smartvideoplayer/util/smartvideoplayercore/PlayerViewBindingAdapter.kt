@@ -17,7 +17,6 @@ import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
-import com.google.android.exoplayer2.upstream.HttpDataSource
 import com.google.android.exoplayer2.upstream.cache.CacheDataSource
 import com.google.android.exoplayer2.upstream.cache.SimpleCache
 import ir.hajhosseini.smartvideoplayer.App
@@ -26,38 +25,41 @@ class PlayerViewAdapter {
 
     companion object {
         private val simpleCache: SimpleCache = App.simpleCache
-        private lateinit var httpDataSourceFactory: HttpDataSource.Factory
         private lateinit var cacheDataSourceFactory: DataSource.Factory
-        private lateinit var simpleExoPlayer: SimpleExoPlayer
-        private var playersMap: MutableMap<Int, SimpleExoPlayer> = mutableMapOf()
-        private var currentPlayingVideo: Pair<Int, SimpleExoPlayer>? = null
 
+        // for hold all players generated
+        private var playersMap: MutableMap<Int, SimpleExoPlayer> = mutableMapOf()
+
+        // for hold current player
+        private var currentPlayingVideo: Pair<Int, SimpleExoPlayer>? = null
         fun releaseAllPlayers() {
             playersMap.map {
                 it.value.release()
             }
         }
 
+        // call when item recycled to improve performance
         fun releaseRecycledPlayers(index: Int) {
             playersMap[index]?.release()
         }
 
         private fun pauseCurrentPlayingVideo() {
             if (currentPlayingVideo != null) {
+                // the exo player that was playing the video
                 currentPlayingVideo?.second?.playWhenReady = false
             }
         }
 
-        fun playIndexThenPausePreviousPlayer(index: Int) {
+        fun pauseCurrentPlayerThenPlayIndex(index: Int) {
             if (playersMap[index]?.playWhenReady == false) {
                 pauseCurrentPlayingVideo()
                 playersMap[index]?.playWhenReady = true
-                currentPlayingVideo = Pair(index, playersMap.get(index)!!)
+                currentPlayingVideo = Pair(index, playersMap[index]!!)
             }
         }
 
-        fun setCacheDataSourceFactory(context: Context) {
-            httpDataSourceFactory = DefaultHttpDataSource.Factory()
+        private fun setCacheDataSourceFactory(context: Context) {
+            val httpDataSourceFactory = DefaultHttpDataSource.Factory()
                 .setAllowCrossProtocolRedirects(true)
 
             DefaultDataSourceFactory(
@@ -70,6 +72,11 @@ class PlayerViewAdapter {
                 .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
         }
 
+        /*
+        *  url is a url of stream video
+        *  progressbar for show when start buffering stream
+        * thumbnail for show before video start
+        * */
         @JvmStatic
         @BindingAdapter(
             value = ["video_url", "on_state_change", "progressbar", "thumbnail", "item_index", "autoPlay"],
@@ -88,19 +95,19 @@ class PlayerViewAdapter {
 
             player.playWhenReady = autoPlay
             player.repeatMode = Player.REPEAT_MODE_ALL
+            // When changing track, retain the latest frame instead of showing a black screen
             setKeepContentOnPlayerReset(true)
+            // We'll show the controller, change to true if want controllers as pause and start
             this.useController = false
 
-
             setCacheDataSourceFactory(context)
-            simpleExoPlayer = SimpleExoPlayer.Builder(context)
-                .setMediaSourceFactory(DefaultMediaSourceFactory(cacheDataSourceFactory)).build()
 
             val mediaItem = MediaItem.fromUri(Uri.parse(url))
             val mediaSource =
                 ProgressiveMediaSource.Factory(cacheDataSourceFactory).createMediaSource(mediaItem)
             player.setMediaSource(mediaSource, true)
             player.prepare()
+
             this.player = player
 
             if (playersMap.containsKey(item_index))
@@ -108,7 +115,7 @@ class PlayerViewAdapter {
             if (item_index != null)
                 playersMap[item_index] = player
 
-            this.player!!.addListener(object : Player.EventListener {
+            this.player?.addListener(object : Player.EventListener {
                 override fun onPlayerError(error: ExoPlaybackException) {
                     super.onPlayerError(error)
                     this@loadVideo.context.toast("Oops! Error occurred while playing media.")

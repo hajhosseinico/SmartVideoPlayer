@@ -8,8 +8,10 @@ import android.util.Log
 import com.google.android.exoplayer2.upstream.*
 import com.google.android.exoplayer2.upstream.cache.*
 import ir.hajhosseini.smartvideoplayer.App
+import ir.hajhosseini.smartvideoplayer.repository.DataStoreRepository
 import ir.hajhosseini.smartvideoplayer.util.smartvideoplayercore.service.Constants.IS_PRE_LOAD_COMPLETED
 import kotlinx.coroutines.*
+import okhttp3.Dispatcher
 import java.lang.Exception
 import java.net.URL
 import java.net.URLConnection
@@ -57,7 +59,11 @@ class VideoPreLoadingService :
             videoUrl = videosList[0]
             videosList.removeAt(0)
         } else {
-            App.addBooleanToPrefs(applicationContext,IS_PRE_LOAD_COMPLETED,true)
+//            App.addBooleanToPrefs(applicationContext,IS_PRE_LOAD_COMPLETED,true)
+            CoroutineScope(Dispatchers.IO).launch {
+                DataStoreRepository.addBooleanToPrefs(IS_PRE_LOAD_COMPLETED,true, applicationContext)
+            }
+
             stopSelf()
         }
         if (!videoUrl.isNullOrBlank()) {

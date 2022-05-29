@@ -6,7 +6,6 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -14,23 +13,19 @@ import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout.OnRefreshListener
 import dagger.hilt.android.AndroidEntryPoint
-import ir.hajhosseini.smartvideoplayer.App
 import ir.hajhosseini.smartvideoplayer.R
 import ir.hajhosseini.smartvideoplayer.databinding.FragmentVideoListBinding
 import ir.hajhosseini.smartvideoplayer.model.retrofit.responsemodels.DataState
 import ir.hajhosseini.smartvideoplayer.model.room.videolist.VideoListCacheEntity
+import ir.hajhosseini.smartvideoplayer.repository.DataStoreRepository
 import ir.hajhosseini.smartvideoplayer.ui.MainActivity
 import ir.hajhosseini.smartvideoplayer.util.InternetStatus
-import ir.hajhosseini.smartvideoplayer.util.smartvideoplayercore.PlayerViewAdapter.Companion.playIndexThenPausePreviousPlayer
+import ir.hajhosseini.smartvideoplayer.util.smartvideoplayercore.PlayerViewAdapter.Companion.pauseCurrentPlayerThenPlayIndex
 import ir.hajhosseini.smartvideoplayer.util.smartvideoplayercore.PlayerViewAdapter.Companion.releaseAllPlayers
 import ir.hajhosseini.smartvideoplayer.util.smartvideoplayercore.RecyclerViewScrollListener
 import ir.hajhosseini.smartvideoplayer.util.smartvideoplayercore.service.Constants
-import ir.hajhosseini.smartvideoplayer.util.smartvideoplayercore.service.Constants.IS_PRE_LOAD_COMPLETED
 import ir.hajhosseini.smartvideoplayer.util.smartvideoplayercore.service.VideoPreLoadingService
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 
 
 @AndroidEntryPoint
@@ -67,7 +62,7 @@ class VideoListFragment : Fragment(R.layout.fragment_video_list) {
 
     private fun getVideoList() {
         var isInternetAvailable: Boolean
-        GlobalScope.launch(Dispatchers.IO) {
+        CoroutineScope(Dispatchers.IO).launch {
             isInternetAvailable = InternetStatus().isInternetAvailable()
             withContext(Dispatchers.Main) {
                 if (isInternetAvailable)
@@ -84,37 +79,44 @@ class VideoListFragment : Fragment(R.layout.fragment_video_list) {
 
     private fun subscribeObservers() {
         viewModel.dataState.observe(viewLifecycleOwner, Observer { dataState ->
-            when (dataState) {
-                is DataState.Success<List<VideoListCacheEntity>> -> {
-                    displayProgressBar(false)
-                    videoListRecyclerAdapter.submitList(dataState.data)
+            CoroutineScope(Dispatchers.Main).launch {
+                when (dataState) {
+                    is DataState.Success<List<VideoListCacheEntity>> -> {
+                        displayProgressBar(false)
+                        videoListRecyclerAdapter.submitList(dataState.data)
 
-                    if(!App.getBooleanPref(requireContext(),IS_PRE_LOAD_COMPLETED)){
-                        // start pre load
-                        val arrayList = ArrayList<String>()
-                        for (data in dataState.data) {
-                            arrayList.add(data.videoUrl)
-                        }
-                        startPreLoadingService(arrayList)
-                        //
+
+                        if (dataState.isFromCache)
+                            notifyIfDataIsFromCache()
+
+                        DataStoreRepository.getIsPreLoadCompleted(requireContext())
+                            .collect { isPreLoadCompleted ->
+                                if (!isPreLoadCompleted) {
+                                    // start pre load
+                                    val arrayList = ArrayList<String>()
+                                    for (data in dataState.data) {
+                                        arrayList.add(data.videoUrl)
+                                    }
+                                    startPreLoadingService(arrayList)
+                                    //
+                                }
+                            }
                     }
 
-                    if (dataState.isFromCache)
-                        notifyIfDataIsFromCache()
-                }
-                is DataState.Error -> {
-                    displayProgressBar(false)
-                    displayError(dataState.exception.toString())
-                }
-                is DataState.Loading -> {
-                    displayProgressBar(true)
+                    is DataState.Error -> {
+                        displayProgressBar(false)
+                        displayError(dataState.exception.toString())
+                    }
+                    is DataState.Loading -> {
+                        displayProgressBar(true)
+                    }
                 }
             }
         })
     }
 
     private fun notifyIfDataIsFromCache() =
-        Toast.makeText(context, "Data is retrieved from cache", Toast.LENGTH_LONG)
+        Toast.makeText(context, "API Data is retrieved from cache", Toast.LENGTH_LONG)
             .show()
 
     private fun initRecyclerView() {
@@ -128,7 +130,7 @@ class VideoListFragment : Fragment(R.layout.fragment_video_list) {
         scrollListener = object : RecyclerViewScrollListener() {
             override fun onItemIsFirstVisibleItem(index: Int) {
                 if (index != -1)
-                    playIndexThenPausePreviousPlayer(index)
+                    pauseCurrentPlayerThenPlayIndex(index)
             }
         }
         binding.recyclerView.addOnScrollListener(scrollListener)
@@ -141,7 +143,7 @@ class VideoListFragment : Fragment(R.layout.fragment_video_list) {
     }
 
     private fun displayProgressBar(shouldDisplay: Boolean) {
-        view?.findViewById<ProgressBar>(R.id.prg_loading)!!.visibility =
+        binding.prgLoading.visibility =
             if (shouldDisplay) View.VISIBLE else View.GONE
     }
 
