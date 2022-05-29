@@ -2,22 +2,19 @@ package ir.hajhosseini.smartvideoplayer.repository
 
 import ir.hajhosseini.smartvideoplayer.model.retrofit.VideoRetrofitInterface
 import ir.hajhosseini.smartvideoplayer.model.retrofit.responsemodels.DataState
-import ir.hajhosseini.smartvideoplayer.model.retrofit.responsemodels.VideoListNetworkEntity
 import ir.hajhosseini.smartvideoplayer.model.room.videolist.VideoListCacheEntity
 import ir.hajhosseini.smartvideoplayer.model.room.videolist.VideoListCacheMapper
 import ir.hajhosseini.smartvideoplayer.model.room.videolist.VideoListDao
-import ir.hajhosseini.smartvideoplayer.util.InternetStatus
-import kotlinx.coroutines.Dispatchers
+import ir.hajhosseini.smartvideoplayer.util.NetworkListener
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.withContext
 
 class VideoListRepository
 constructor(
     private val videoDao: VideoListDao,
     private val videoRetrofitInterface: VideoRetrofitInterface,
     private val cacheMapper: VideoListCacheMapper,
-    private val internetStatus: InternetStatus,
+    private val networkListener: NetworkListener,
 ) {
     suspend fun getVideos(
         workOffline: Boolean
@@ -25,7 +22,7 @@ constructor(
         flow {
             emit(DataState.Loading)
 
-            if (internetStatus.isInternetAvailable() and !workOffline) {
+            if (networkListener.isConnected and !workOffline) {
                 val baseNetworkMovies = videoRetrofitInterface.getVideoList()
                 for (video in baseNetworkMovies) {
                     videoDao.insert(cacheMapper.mapVideoListToEntity(video))
@@ -34,8 +31,9 @@ constructor(
                 emit(DataState.Success(cachedVideos))
 
             } else {
+                // retry from cache
                 val dataState = DataState.Success(videoDao.get())
-                dataState.isFromCache = true
+                    dataState.isFromCache = dataState.data.isNotEmpty()
                 emit(dataState)
             }
         }

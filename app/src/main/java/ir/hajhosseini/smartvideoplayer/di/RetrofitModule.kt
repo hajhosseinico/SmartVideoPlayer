@@ -7,7 +7,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import ir.hajhosseini.smartvideoplayer.model.retrofit.VideoRetrofitInterface
-import ir.hajhosseini.smartvideoplayer.util.InternetStatus
+import ir.hajhosseini.smartvideoplayer.util.NetworkListener
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -53,7 +53,7 @@ object RetrofitModule {
 
     @Singleton
     @Provides
-    fun provideInternetStatus(): InternetStatus {
-        return InternetStatus()
+    fun provideNetworkListener(): NetworkListener {
+        return NetworkListener()
     }
 }

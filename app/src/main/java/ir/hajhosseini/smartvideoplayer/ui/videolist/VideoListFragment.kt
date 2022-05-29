@@ -19,13 +19,14 @@ import ir.hajhosseini.smartvideoplayer.model.retrofit.responsemodels.DataState
 import ir.hajhosseini.smartvideoplayer.model.room.videolist.VideoListCacheEntity
 import ir.hajhosseini.smartvideoplayer.repository.DataStoreRepository
 import ir.hajhosseini.smartvideoplayer.ui.MainActivity
-import ir.hajhosseini.smartvideoplayer.util.InternetStatus
+import ir.hajhosseini.smartvideoplayer.util.NetworkListener
 import ir.hajhosseini.smartvideoplayer.util.smartvideoplayercore.PlayerViewAdapter.Companion.pauseCurrentPlayerThenPlayIndex
 import ir.hajhosseini.smartvideoplayer.util.smartvideoplayercore.PlayerViewAdapter.Companion.releaseAllPlayers
 import ir.hajhosseini.smartvideoplayer.util.smartvideoplayercore.RecyclerViewScrollListener
 import ir.hajhosseini.smartvideoplayer.util.smartvideoplayercore.service.Constants
 import ir.hajhosseini.smartvideoplayer.util.smartvideoplayercore.service.VideoPreLoadingService
 import kotlinx.coroutines.*
+import javax.inject.Inject
 
 
 @AndroidEntryPoint
@@ -36,6 +37,9 @@ class VideoListFragment : Fragment(R.layout.fragment_video_list) {
     private var _binding: FragmentVideoListBinding? = null
     private val binding get() = _binding!!
     private lateinit var scrollListener: RecyclerViewScrollListener
+
+    @Inject
+    lateinit var networkListener: NetworkListener
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -61,20 +65,7 @@ class VideoListFragment : Fragment(R.layout.fragment_video_list) {
     }
 
     private fun getVideoList() {
-        var isInternetAvailable: Boolean
-        CoroutineScope(Dispatchers.IO).launch {
-            isInternetAvailable = InternetStatus().isInternetAvailable()
-            withContext(Dispatchers.Main) {
-                if (isInternetAvailable)
-                    viewModel.setStateEvent(VideoListStateEvent.GetVideos, false)
-                else
-                    Toast.makeText(
-                        requireContext(),
-                        "Pleas connect to internet and refresh the application",
-                        Toast.LENGTH_LONG
-                    ).show()
-            }
-        }
+        viewModel.setStateEvent(VideoListStateEvent.GetVideos, false)
     }
 
     private fun subscribeObservers() {
@@ -85,9 +76,13 @@ class VideoListFragment : Fragment(R.layout.fragment_video_list) {
                         displayProgressBar(false)
                         videoListRecyclerAdapter.submitList(dataState.data)
 
+                        if (dataState.data.isEmpty()) {
+                            showToast(getString(R.string.internet_is_not_available_message))
+                        }
+                        if (dataState.isFromCache) {
+                            showToast(getString(R.string.data_is_from_cache_message))
+                        }
 
-                        if (dataState.isFromCache)
-                            notifyIfDataIsFromCache()
 
                         DataStoreRepository.getIsPreLoadCompleted(requireContext())
                             .collect { isPreLoadCompleted ->
@@ -115,9 +110,10 @@ class VideoListFragment : Fragment(R.layout.fragment_video_list) {
         })
     }
 
-    private fun notifyIfDataIsFromCache() =
-        Toast.makeText(context, "API Data is retrieved from cache", Toast.LENGTH_LONG)
+    private fun showToast(message: String) {
+        Toast.makeText(context, message, Toast.LENGTH_LONG)
             .show()
+    }
 
     private fun initRecyclerView() {
         binding.recyclerView.apply {

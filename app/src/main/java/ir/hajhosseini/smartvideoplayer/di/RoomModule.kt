@@ -17,7 +17,7 @@ import javax.inject.Singleton
 object RoomModule {
     @Singleton
     @Provides
-    fun provideMovieDb(@ApplicationContext context: Context): VideoDatabase {
+    fun provideVideoDb(@ApplicationContext context: Context): VideoDatabase {
         return Room.databaseBuilder(
             context, VideoDatabase::class.java,
             VideoDatabase.DATABASE_NAME
@@ -28,7 +28,7 @@ object RoomModule {
 
     @Singleton
     @Provides
-    fun provideMovieDAO(movieDatabase: VideoDatabase): VideoListDao {
-        return movieDatabase.videoListDao()
+    fun provideVideoDAO(videoDatabase: VideoDatabase): VideoListDao {
+        return videoDatabase.videoListDao()
     }
 }

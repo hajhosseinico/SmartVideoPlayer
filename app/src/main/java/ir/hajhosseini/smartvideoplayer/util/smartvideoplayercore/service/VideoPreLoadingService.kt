@@ -61,7 +61,11 @@ class VideoPreLoadingService :
         } else {
 //            App.addBooleanToPrefs(applicationContext,IS_PRE_LOAD_COMPLETED,true)
             CoroutineScope(Dispatchers.IO).launch {
-                DataStoreRepository.addBooleanToPrefs(IS_PRE_LOAD_COMPLETED,true, applicationContext)
+                DataStoreRepository.addBooleanToPrefs(
+                    IS_PRE_LOAD_COMPLETED,
+                    true,
+                    applicationContext
+                )
             }
 
             stopSelf()

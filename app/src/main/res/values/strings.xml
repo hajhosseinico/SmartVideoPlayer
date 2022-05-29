@@ -8,4 +8,6 @@
     <string name="viewers">Viewers</string>
     <string name="Views">Views</string>
     <string name="likes">Likes</string>
+    <string name="data_is_from_cache_message">API Data is retrieved from cache</string>
+    <string name="internet_is_not_available_message">Internet is not available</string>
 </resources>
