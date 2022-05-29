@@ -88,7 +88,7 @@ class VideoPreLoadingService :
                         Log.d(TAG, "downloadPercentage $downloadPercentage videoUri: $videoUri")
                     }
 
-                cachingJob = GlobalScope.launch(Dispatchers.IO) {
+                cachingJob = CoroutineScope(Dispatchers.IO).launch {
                     cacheVideo(dataSpec, progressListener)
                     preCacheVideo(videosList)
                 }

@@ -118,7 +118,7 @@ class PlayerViewAdapter {
             this.player?.addListener(object : Player.EventListener {
                 override fun onPlayerError(error: ExoPlaybackException) {
                     super.onPlayerError(error)
-                    this@loadVideo.context.toast("Oops! Error occurred while playing media.")
+                    this@loadVideo.context.toast("Video in index '$item_index' is not fully cached and Internet is not available")
                 }
 
                 override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
