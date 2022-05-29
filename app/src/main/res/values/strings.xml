@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Smart Vid Player</string>
+    <string name="action_settings">Settings</string>
+    <string name="home_title">Home</string>
+    <string name="settings_title">Settings</string>
+    <string name="sandra_kim">\u0040Sandrakim</string>
+    <string name="number_row">No</string>
+    <string name="viewers">Viewers</string>
+    <string name="Views">Views</string>
+    <string name="likes">Likes</string>
+</resources>

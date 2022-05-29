@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_main"
+    app:startDestination="@id/videoListFragment">
+
+    <fragment
+        android:id="@+id/videoListFragment"
+        android:name="ir.hajhosseini.smartvideoplayer.ui.videolist.VideoListFragment"
+        android:label="VideoListFragment" >
+        <action
+            android:id="@+id/action_videoListFragment_to_settingFragment"
+            app:destination="@id/settingFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/settingFragment"
+        android:name="ir.hajhosseini.smartvideoplayer.ui.setting.SettingFragment"
+        android:label="SettingFragment" />
+</navigation>
