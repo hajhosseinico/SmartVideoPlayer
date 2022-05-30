@@ -36,7 +36,7 @@ Demo video player app featuring pre-loading (with optional percentage), caching 
    **Second:** Watch the first video (DO NOT SCROLL), when you are watching, all the videos will be pre-loaded in service within 10% of their length (Exo has a minimum length). <br />
    **Third:** Disconnect from the Internet and scroll through the list. You will see all the videos will play for at least 10% <br />
    
-   # Cache:
+   # Video Caching:
    Connect to the Internet and open the application, watch videos until the end, disconnect from the Internet, close the application, and reopen it. You will see that    all the videos will play without the Internet
 
 
