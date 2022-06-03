@@ -3,11 +3,11 @@ package ir.hajhosseini.smartvideoplayer.model.room.videolist
 import androidx.room.*
 
 /**
- * Movie list room Dao
+ * Video list room Dao
  */
 @Dao
 interface VideoListDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(videoListEntity: VideoListCacheEntity): Long
 
     @Query("SELECT * FROM video_list")

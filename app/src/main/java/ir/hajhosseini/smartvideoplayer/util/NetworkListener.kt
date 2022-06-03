@@ -27,7 +27,7 @@ class NetworkListener @Inject constructor() :
     @SuppressLint("CheckResult")
     private fun networkMonitor() {
         val settings = InternetObservingSettings.builder()
-            .initialInterval(100)
+            .initialInterval(0)
             .host("www.google.com")
             .strategy(SocketInternetObservingStrategy())
             .build()

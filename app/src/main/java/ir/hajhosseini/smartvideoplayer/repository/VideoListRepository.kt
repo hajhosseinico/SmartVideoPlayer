@@ -22,18 +22,25 @@ constructor(
         flow {
             emit(DataState.Loading)
 
-            if (networkListener.isConnected and !workOffline) {
-                val baseNetworkMovies = videoRetrofitInterface.getVideoList()
-                for (video in baseNetworkMovies) {
-                    videoDao.insert(cacheMapper.mapVideoListToEntity(video))
+            if (!workOffline) {
+                try {
+                    val baseNetworkMovies = videoRetrofitInterface.getVideoList()
+                    for (video in baseNetworkMovies) {
+                        videoDao.insert(cacheMapper.mapVideoListToEntity(video))
+                    }
+                    val cachedVideos = videoDao.get()
+                    emit(DataState.Success(cachedVideos))
+                } catch (e: Exception) {
+                    e.printStackTrace()
+
+                    val cachedVideos = videoDao.get()
+                    emit(DataState.Success(cachedVideos))
                 }
-                val cachedVideos = videoDao.get()
-                emit(DataState.Success(cachedVideos))
 
             } else {
                 // retry from cache
                 val dataState = DataState.Success(videoDao.get())
-                    dataState.isFromCache = dataState.data.isNotEmpty()
+                dataState.isFromCache = dataState.data.isNotEmpty()
                 emit(dataState)
             }
         }
